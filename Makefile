@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := hello-world
+PROJECT_NAME := Weather_station
 
 include $(IDF_PATH)/make/project.mk
 
