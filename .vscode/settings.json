@@ -8,6 +8,7 @@
         "lcd_config.h": "c",
         "lcd_nokia_5110.h": "c",
         "lcd_task.h": "c",
-        "time_date.h": "c"
+        "time_date.h": "c",
+        "station.h": "c"
     }
 }

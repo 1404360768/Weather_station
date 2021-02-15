@@ -18,7 +18,7 @@
 #include "esp_event.h"
 
 #include "smartconfig_main.h"
-#include "station_example_main.h"
+#include "station.h"
 #include "lcd_task.h"
 #include "time_date.h"
 
@@ -52,8 +52,6 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     lcd_task_init();
-    //smartconfig_main();
-    wifi_station_main();
-
+    wifi_station_init();
     time_date_init();
 }
