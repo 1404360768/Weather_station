@@ -100,11 +100,11 @@ static void event_handler(void *arg, esp_event_base_t event_base,
         nvs_handle_t my_handle;
         u_int8_t flag = 1;
         //将获取的密码保存起来 nvs_flash
-        ESP_ERROR_CHECK(nvs_open(NVS_CUSTOMER, NVS_READWRITE, &my_handle));                                 //打开新的nvs_flash
-        ESP_ERROR_CHECK(nvs_set_u8(my_handle, NVS_SMARTCONFIG_FLAG, flag));                                 //存储配网标志
-        ESP_ERROR_CHECK(nvs_set_blob(my_handle, NVS_SMARTCONFIG_DATA, &wifi_config, sizeof(wifi_config)));  //将smartconfig获取到的wifi配置信息保存到外部flash
-        ESP_ERROR_CHECK(nvs_commit(my_handle));                                                             //提交保存信息
-        nvs_close(my_handle);                                                                               //关闭nvs_flash
+        ESP_ERROR_CHECK(nvs_open(NVS_CUSTOMER, NVS_READWRITE, &my_handle));                                //打开新的nvs_flash
+        ESP_ERROR_CHECK(nvs_set_u8(my_handle, NVS_SMARTCONFIG_FLAG, flag));                                //存储配网标志
+        ESP_ERROR_CHECK(nvs_set_blob(my_handle, NVS_SMARTCONFIG_DATA, &wifi_config, sizeof(wifi_config))); //将smartconfig获取到的wifi配置信息保存到外部flash
+        ESP_ERROR_CHECK(nvs_commit(my_handle));                                                            //提交保存信息
+        nvs_close(my_handle);                                                                              //关闭nvs_flash
 
         esp_wifi_connect();
     }
@@ -120,6 +120,8 @@ static void initialise_wifi(void)
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(SC_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
+
+    ESP_ERROR_CHECK(esp_wifi_stop());
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());

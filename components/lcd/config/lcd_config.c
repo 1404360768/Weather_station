@@ -2,7 +2,7 @@
 #include "lcd_nokia_5110.h"
 #include "lcd_ssd_1351.h"
 
-
+SemaphoreHandle_t lcdSemaphMutex;
 uint8_t **lcd_buf = NULL;
 lcd_device_t lcd_device = {0};
 
@@ -123,6 +123,8 @@ void lcd_reset_pin_write(uint8_t sta)
 
 void lcd_dev_init(void)
 {
+    lcdSemaphMutex = xSemaphoreCreateMutex();
+    xSemaphoreGive(lcdSemaphMutex);                  //创建的时候先释放一次
     lcd_spi_init();
     // Nokia_Init();
     SSD1351_Init();

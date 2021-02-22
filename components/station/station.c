@@ -20,6 +20,8 @@
 #include "lwip/sys.h"
 
 #include "smartconfig_main.h"
+#include "lcd_config.h"
+#include "lcd_ssd_1351.h"
 
 /* The examples use WiFi configuration that you can set via project configuration menu
 
@@ -30,8 +32,14 @@
 #define EXAMPLE_ESP_WIFI_PASS CONFIG_ESP_WIFI_PASSWORD
 #define EXAMPLE_ESP_MAXIMUM_RETRY CONFIG_ESP_MAXIMUM_RETRY
 
-static const char *TAG = "wifi station";
+EventGroupHandle_t station_event_group;
+static const int CONNECTED_BIT = (1 << 0);
+static const int DISCONNECTED_BIT = (1 << 1);
+static const int RECONNECTED_MAX_BIT = (1 << 2);
 
+//wifi是否链接
+uint8_t wifi_state = 0;
+static const char *TAG = "wifi station";
 static int s_retry_num = 0;
 
 static void event_handler(void *arg, esp_event_base_t event_base,
@@ -51,9 +59,11 @@ static void event_handler(void *arg, esp_event_base_t event_base,
         }
         else
         {
-            ESP_LOGE(TAG, "retry over max...");
+            ESP_LOGE(TAG, "retry over max...in to smartconfig");
+            xEventGroupSetBits(station_event_group, RECONNECTED_MAX_BIT);
         }
         ESP_LOGE(TAG, "connect to the AP fail");
+        xEventGroupSetBits(station_event_group, DISCONNECTED_BIT);
     }
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
     {
@@ -61,6 +71,7 @@ static void event_handler(void *arg, esp_event_base_t event_base,
         ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
         ESP_LOGI(TAG, "connect to the AP successful");
+        xEventGroupSetBits(station_event_group, CONNECTED_BIT);
     }
 }
 
@@ -107,6 +118,16 @@ void wifi_init_sta(void)
             ESP_LOGE(TAG, "smartconfig no flag.");
         else
             ESP_LOGE(TAG, "nvs_get_u8 failed.");
+        if (lcdSemaphMutex != NULL)
+        {
+            xSemaphoreTake(lcdSemaphMutex, portMAX_DELAY);
+            SSD1351_WriteString(20, 0, "smart...", Font_7x10, SSD1351_RED, SSD1351_BLACK);
+            xSemaphoreGive(lcdSemaphMutex);
+        }
+        else
+        {
+            ESP_LOGI(TAG, "lcdSemaphMutex is NULL");
+        }
         smartconfig_main();
         return;
     }
@@ -129,27 +150,91 @@ void wifi_init_sta(void)
     }
 
     nvs_close(my_handle);
-    uint8_t ssid[33] = {0};
-    uint8_t password[65] = {0};
-    memcpy(ssid, wifi_config.sta.ssid, sizeof(wifi_config.sta.ssid));
-    memcpy(password, wifi_config.sta.password, sizeof(wifi_config.sta.password));
+    // uint8_t ssid[33] = {0};
+    // uint8_t password[65] = {0};
+    // memcpy(ssid, wifi_config.sta.ssid, sizeof(wifi_config.sta.ssid));
+    // memcpy(password, wifi_config.sta.password, sizeof(wifi_config.sta.password));
 
-    ESP_LOGI(TAG, "SSID:%s", ssid);
-    ESP_LOGI(TAG, "PASSWORD:%s", password);
-
-    // uint8_t name[] = "nihsi";
-    // memcpy(wifi_config.sta.ssid,name , sizeof(name));                //测试找不到WiFi会怎么样
-    // memcpy(wifi_config.sta.password,name , sizeof(name));
+    // ESP_LOGI(TAG, "SSID:%s", ssid);
+    // ESP_LOGI(TAG, "PASSWORD:%s", password);
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
+    if (lcdSemaphMutex != NULL)
+    {
+        xSemaphoreTake(lcdSemaphMutex, portMAX_DELAY);
+        SSD1351_WriteString(20, 0, "count...", Font_7x10, SSD1351_RED, SSD1351_BLACK);
+        xSemaphoreGive(lcdSemaphMutex);
+    }
+    else
+    {
+        ESP_LOGI(TAG, "lcdSemaphMutex is NULL");
+    }
 
     ESP_LOGI(TAG, "wifi_init_sta finished.");
+}
+
+static void station_task(void *parm)
+{
+    EventBits_t uxBits;
+    while (1)
+    {
+        uxBits = xEventGroupWaitBits(station_event_group, CONNECTED_BIT | DISCONNECTED_BIT | RECONNECTED_MAX_BIT, true, false, portMAX_DELAY);
+        if (uxBits & CONNECTED_BIT)
+        {
+            wifi_state = 1;
+            ESP_LOGI(TAG, "wifi_state = 1");
+            if (lcdSemaphMutex != NULL)
+            {
+                xSemaphoreTake(lcdSemaphMutex, portMAX_DELAY);
+                SSD1351_WriteString(20, 0, "                ", Font_7x10, SSD1351_BLACK, SSD1351_BLACK);
+                SSD1351_WriteString(120, 0, "V", Font_7x10, SSD1351_RED, SSD1351_BLACK);
+                xSemaphoreGive(lcdSemaphMutex);
+            }
+            else
+            {
+                ESP_LOGI(TAG, "lcdSemaphMutex is NULL");
+            }
+        }
+        if (uxBits & DISCONNECTED_BIT)
+        {
+            wifi_state = 0;
+            ESP_LOGI(TAG, "wifi_state = 0");
+            if (lcdSemaphMutex != NULL)
+            {
+                xSemaphoreTake(lcdSemaphMutex, portMAX_DELAY);
+                SSD1351_WriteString(20, 0, "                ", Font_7x10, SSD1351_BLACK, SSD1351_BLACK);
+                SSD1351_WriteString(120, 0, "X", Font_7x10, SSD1351_RED, SSD1351_BLACK);
+                xSemaphoreGive(lcdSemaphMutex);
+            }
+            else
+            {
+                ESP_LOGI(TAG, "lcdSemaphMutex is NULL");
+            }
+        }
+        if (uxBits & RECONNECTED_MAX_BIT)
+        {
+            smartconfig_main();
+            if (lcdSemaphMutex != NULL)
+            {
+                xSemaphoreTake(lcdSemaphMutex, portMAX_DELAY);
+                SSD1351_WriteString(20, 0, "start smart", Font_7x10, SSD1351_BLACK, SSD1351_BLACK);
+                xSemaphoreGive(lcdSemaphMutex);
+            }
+            else
+            {
+                ESP_LOGI(TAG, "lcdSemaphMutex is NULL");
+            }
+        }
+        taskYIELD(); //主动要求切换任务
+    }
 }
 
 void wifi_station_init(void)
 {
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
+    station_event_group = xEventGroupCreate();
+    xTaskCreate(station_task, "station_task", 2048, NULL, 3, NULL);
     wifi_init_sta();
 }

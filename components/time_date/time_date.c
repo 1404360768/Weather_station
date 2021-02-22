@@ -7,12 +7,13 @@
 #include "esp_wifi.h"
 #include "esp_sntp.h"
 #include "esp_log.h"
-
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
 #include <lwip/netdb.h>
 
+#include "station.h"
+#include "lcd_config.h"
 #include "lcd_ssd_1351.h"
 
 //http组包宏，获取天气的http接口参数
@@ -33,7 +34,18 @@ static const char *TAG = "time_data";
 
 void time_sync_notification_cb(struct timeval *tv)
 {
-    ESP_LOGE(TAG, "Notification of a time synchronization event");
+    time_t now = 0;
+    struct tm timeinfo = {0};
+    // Is time set? If not, tm_year will be (1970 - 1900).
+    if (timeinfo.tm_year < (2021 - 1900))
+    {
+        // ESP_LOGI(TAG, "Time is not set yet");
+        // update 'now' variable with current time
+        time(&now);
+        localtime_r(&now, &timeinfo);
+        ESP_LOGI(TAG, "Time is set yet");
+    }
+    ESP_LOGI(TAG, "Notification of a time synchronization event");
 }
 
 static void initialize_sntp(void)
@@ -43,28 +55,10 @@ static void initialize_sntp(void)
     sntp_setservername(0, "pool.ntp.org");
     sntp_set_time_sync_notification_cb(time_sync_notification_cb);
     sntp_init();
-}
 
-static void esp_wait_sntp_sync(void)
-{
-    char strftime_buf[64];
-    time_t now = 0;
-    struct tm timeinfo = {0};
-    // Is time set? If not, tm_year will be (1970 - 1900).
-    if (timeinfo.tm_year < (2021 - 1900))
-    {
-        ESP_LOGI(TAG, "Time is not set yet");
-        // update 'now' variable with current time
-        time(&now);
-        localtime_r(&now, &timeinfo);
-    }
     // set timezone to China Standard Time
     setenv("TZ", "CST-8", 1);
     tzset();
-
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
-    SSD1351_WriteString(0, 10, strftime_buf, Font_7x10, SSD1351_RED, SSD1351_BLACK);
 }
 
 static void time_date_task(void *parm)
@@ -76,6 +70,7 @@ static void time_date_task(void *parm)
     int r = 0;
     char recv_buf[1024];
     char mid_buf[1024];
+    char strftime_buf[64];
     const struct addrinfo hints = {
         .ai_family = AF_INET,
         .ai_socktype = SOCK_STREAM,
@@ -84,25 +79,48 @@ static void time_date_task(void *parm)
     struct tm timeinfo = {0};
     while (1)
     {
-        esp_wait_sntp_sync();
+        if (wifi_state == 0)
+        {
+            vTaskDelay(5000 / portTICK_PERIOD_MS);
+            ESP_LOGI(TAG, "wifi not connect...");
+            continue;
+        }
         time(&now);
         localtime_r(&now, &timeinfo);
 
+        sprintf(strftime_buf, "%d:%d:%d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+        ESP_LOGI(TAG, "Shanghai is time: %s", strftime_buf);
+
+        if (lcdSemaphMutex != NULL)
+        {
+            /* See if we can obtain the semaphore.  If the semaphore is not
+        available wait 10 ticks to see if it becomes free. */
+            if (xSemaphoreTake(lcdSemaphMutex, (TickType_t)10) == pdTRUE)
+            {
+                SSD1351_WriteString(20, 40, strftime_buf, Font_11x18, SSD1351_RED, SSD1351_BLACK);
+                xSemaphoreGive(lcdSemaphMutex);
+            }
+        }
+        else
+        {
+            ESP_LOGI(TAG, "lcdSemaphMutex is NULL");
+        }
+
         vTaskDelay(1000 / portTICK_PERIOD_MS);
+
         if (timeinfo.tm_sec != request_del)
         {
             ESP_LOGI(TAG, "sec=%d\r\n", timeinfo.tm_sec);
             continue;
         }
-        ESP_LOGE(TAG, "sec=%d\r\n", timeinfo.tm_sec);
+
         request_del = (timeinfo.tm_sec + request_del) % 60;
         //DNS域名解析
         int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
         if (err != 0 || res == NULL)
         {
             ESP_LOGE(TAG, "DNS lookup failed err=%d res=%p\r\n", err, res);
-                // ESP_LOGE(TAG, "DNS lookup failed errno: %d", errno);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            // ESP_LOGE(TAG, "DNS lookup failed errno: %d", errno);
             continue;
         }
 
@@ -117,7 +135,6 @@ static void time_date_task(void *parm)
             ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
             close(sock);
             freeaddrinfo(res);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
             continue;
         }
         //连接ip
