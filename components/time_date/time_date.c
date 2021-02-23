@@ -1,4 +1,3 @@
-#include "time_date.h"
 #include <string.h>
 #include <sys/param.h>
 #include "freertos/FreeRTOS.h"
@@ -12,6 +11,7 @@
 #include "lwip/sys.h"
 #include <lwip/netdb.h>
 
+#include "time_date.h"
 #include "station.h"
 #include "lcd_config.h"
 #include "lcd_ssd_1351.h"
@@ -23,6 +23,8 @@
 #define APIKEY "g3egns3yk2ahzb0p"
 #define city "huanggang"
 #define language "en"
+
+extern SemaphoreHandle_t lcdSemaphMutex;
 
 //http请求包
 static const char *REQUEST = "GET " WEB_URL "" APIKEY "&location=" city "&language=" language " HTTP/1.1\r\n"
@@ -65,7 +67,7 @@ static void time_date_task(void *parm)
 {
     int8_t request_del = 30;
     struct addrinfo *res;
-    struct in_addr *addr;
+    // struct in_addr *addr;
     int sock = 0;
     int r = 0;
     char recv_buf[1024];
@@ -89,44 +91,39 @@ static void time_date_task(void *parm)
         localtime_r(&now, &timeinfo);
 
         sprintf(strftime_buf, "%d:%d:%d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
-        ESP_LOGI(TAG, "Shanghai is time: %s", strftime_buf);
 
-        if (lcdSemaphMutex != NULL)
-        {
-            /* See if we can obtain the semaphore.  If the semaphore is not
-        available wait 10 ticks to see if it becomes free. */
-            if (xSemaphoreTake(lcdSemaphMutex, (TickType_t)10) == pdTRUE)
+         if (lcdSemaphMutex != NULL)
             {
+                xSemaphoreTake(lcdSemaphMutex, portMAX_DELAY);
+                if(timeinfo.tm_sec < 10)
+                    SSD1351_WriteString(95, 40, " ", Font_11x18, SSD1351_BLACK, SSD1351_BLACK);
                 SSD1351_WriteString(20, 40, strftime_buf, Font_11x18, SSD1351_RED, SSD1351_BLACK);
                 xSemaphoreGive(lcdSemaphMutex);
             }
-        }
-        else
-        {
-            ESP_LOGI(TAG, "lcdSemaphMutex is NULL");
-        }
+            else
+            {
+                ESP_LOGI(TAG, "lcdSemaphMutex is NULL");
+            }
 
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
 
         if (timeinfo.tm_sec != request_del)
         {
-            ESP_LOGI(TAG, "sec=%d\r\n", timeinfo.tm_sec);
             continue;
         }
 
-        request_del = (timeinfo.tm_sec + request_del) % 60;
+        request_del = (timeinfo.tm_sec + 1 + request_del) % 60;
         //DNS域名解析
         int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
         if (err != 0 || res == NULL)
         {
             ESP_LOGE(TAG, "DNS lookup failed err=%d res=%p\r\n", err, res);
-            // ESP_LOGE(TAG, "DNS lookup failed errno: %d", errno);
             continue;
         }
 
         //打印获取的IP
-        addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
-        ESP_LOGI(TAG, "DNS lookup succeeded. IP=%s\r\n", inet_ntoa(*addr));
+        // addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
+        // ESP_LOGI(TAG, "DNS lookup succeeded. IP=%s\r\n", inet_ntoa(*addr));
 
         //新建socket
         sock = socket(res->ai_family, res->ai_socktype, IPPROTO_IP);

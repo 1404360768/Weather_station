@@ -1,5 +1,5 @@
-#ifndef __SMART_CONFIG_H
-#define __SMART_CONFIG_H
+#ifndef __GETWIFI_H
+#define __GETWIFI_H
 
 
 #define NVS_CUSTOMER "smartconfig"
@@ -7,7 +7,7 @@
 #define NVS_SMARTCONFIG_DATA "param_2"
 
 
-void smartconfig_main(void);
+void smartconfig(void);
 
 
-#endif   /* __SMART_CONFIG_H  */
+#endif   /* __GETWIFI_H  */

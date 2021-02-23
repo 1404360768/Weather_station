@@ -1,14 +1,8 @@
 {
     "files.associations": {
-        "image.h": "c",
-        "fonts_2.h": "c",
-        "lcd_ssd_1351.h": "c",
-        "fonts.h": "c",
-        "smartconfig_main.h": "c",
+        "station.h": "c",
         "lcd_config.h": "c",
-        "lcd_nokia_5110.h": "c",
-        "lcd_task.h": "c",
-        "time_date.h": "c",
-        "station.h": "c"
+        "semphr.h": "c",
+        "*.inc": "c"
     }
 }

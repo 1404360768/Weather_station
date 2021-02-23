@@ -1,7 +1,7 @@
 #ifndef __LCD_SSD_1351_H
 #define __LCD_SSD_1351_H
 
-#include "../config/lcd_config.h"
+#include "lcd_config.h"
 #include "fonts.h"
 
 // default orientation

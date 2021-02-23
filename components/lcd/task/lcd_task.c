@@ -3,7 +3,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
-
 #include "lcd_ssd_1351.h"
 
 static const char *TAG = "lcd_task";

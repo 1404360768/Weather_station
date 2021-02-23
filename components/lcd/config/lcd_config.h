@@ -6,13 +6,11 @@
 #include <string.h>
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "esp_system.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
-
-
-extern SemaphoreHandle_t lcdSemaphMutex;
 
 #define LCD_HOST HSPI_HOST
 #define DMA_CHAN 2

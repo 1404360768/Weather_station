@@ -4,7 +4,6 @@
  /home/xiang/esp/Weather_station/build/bootloader_support/libbootloader_support.a
  /home/xiang/esp/Weather_station/build/bt/libbt.a
  /home/xiang/esp/Weather_station/build/cbor/libcbor.a
- /home/xiang/esp/Weather_station/build/cmock/libcmock.a
  /home/xiang/esp/Weather_station/build/coap/libcoap.a
  /home/xiang/esp/Weather_station/build/console/libconsole.a
  /home/xiang/esp/Weather_station/build/cxx/libcxx.a
@@ -21,11 +20,9 @@
  /home/xiang/esp/Weather_station/build/esp_http_client/libesp_http_client.a
  /home/xiang/esp/Weather_station/build/esp_http_server/libesp_http_server.a
  /home/xiang/esp/Weather_station/build/esp_https_ota/libesp_https_ota.a
- /home/xiang/esp/Weather_station/build/esp_hw_support/libesp_hw_support.a
  /home/xiang/esp/Weather_station/build/esp_ipc/libesp_ipc.a
  /home/xiang/esp/Weather_station/build/esp_local_ctrl/libesp_local_ctrl.a
  /home/xiang/esp/Weather_station/build/esp_netif/libesp_netif.a
- /home/xiang/esp/Weather_station/build/esp_pm/libesp_pm.a
  /home/xiang/esp/Weather_station/build/esp_ringbuf/libesp_ringbuf.a
  /home/xiang/esp/Weather_station/build/esp_rom/libesp_rom.a
  /home/xiang/esp/Weather_station/build/esp_serial_slave_link/libesp_serial_slave_link.a
@@ -35,10 +32,11 @@
  /home/xiang/esp/Weather_station/build/esp_wifi/libesp_wifi.a
  /home/xiang/esp/Weather_station/build/espcoredump/libespcoredump.a
  /home/xiang/esp/Weather_station/build/expat/libexpat.a
+ /home/xiang/esp/Weather_station/build/factory_restore/libfactory_restore.a
  /home/xiang/esp/Weather_station/build/fatfs/libfatfs.a
  /home/xiang/esp/Weather_station/build/freemodbus/libfreemodbus.a
  /home/xiang/esp/Weather_station/build/freertos/libfreertos.a
- /home/xiang/esp/Weather_station/build/hal/libhal.a
+ /home/xiang/esp/Weather_station/build/getwifi/libgetwifi.a
  /home/xiang/esp/Weather_station/build/heap/libheap.a
  /home/xiang/esp/Weather_station/build/idf_test/libidf_test.a
  /home/xiang/esp/Weather_station/build/jsmn/libjsmn.a
@@ -60,7 +58,6 @@
  /home/xiang/esp/Weather_station/build/protocomm/libprotocomm.a
  /home/xiang/esp/Weather_station/build/pthread/libpthread.a
  /home/xiang/esp/Weather_station/build/sdmmc/libsdmmc.a
- /home/xiang/esp/Weather_station/build/smart_config/libsmart_config.a
  /home/xiang/esp/Weather_station/build/soc/libsoc.a
  /home/xiang/esp/Weather_station/build/spi_flash/libspi_flash.a
  /home/xiang/esp/Weather_station/build/spiffs/libspiffs.a

@@ -1,11 +1,3 @@
-/* WiFi station Example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -19,18 +11,15 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-#include "smartconfig_main.h"
-#include "lcd_config.h"
+#include "getwifi.h"
+#include "station.h"
 #include "lcd_ssd_1351.h"
 
-/* The examples use WiFi configuration that you can set via project configuration menu
-
-   If you'd rather not, just change the below entries to strings with
-   the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
-*/
 #define EXAMPLE_ESP_WIFI_SSID CONFIG_ESP_WIFI_SSID
 #define EXAMPLE_ESP_WIFI_PASS CONFIG_ESP_WIFI_PASSWORD
 #define EXAMPLE_ESP_MAXIMUM_RETRY CONFIG_ESP_MAXIMUM_RETRY
+
+extern SemaphoreHandle_t lcdSemaphMutex;
 
 EventGroupHandle_t station_event_group;
 static const int CONNECTED_BIT = (1 << 0);
@@ -128,10 +117,9 @@ void wifi_init_sta(void)
         {
             ESP_LOGI(TAG, "lcdSemaphMutex is NULL");
         }
-        smartconfig_main();
+        smartconfig();
         return;
     }
-    printf("Restart counter = %d\n", flag);
 
     err = nvs_get_blob(my_handle, NVS_SMARTCONFIG_DATA, &wifi_config, &len);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND)
@@ -204,7 +192,6 @@ static void station_task(void *parm)
             if (lcdSemaphMutex != NULL)
             {
                 xSemaphoreTake(lcdSemaphMutex, portMAX_DELAY);
-                SSD1351_WriteString(20, 0, "                ", Font_7x10, SSD1351_BLACK, SSD1351_BLACK);
                 SSD1351_WriteString(120, 0, "X", Font_7x10, SSD1351_RED, SSD1351_BLACK);
                 xSemaphoreGive(lcdSemaphMutex);
             }
@@ -215,11 +202,11 @@ static void station_task(void *parm)
         }
         if (uxBits & RECONNECTED_MAX_BIT)
         {
-            smartconfig_main();
+            smartconfig();
             if (lcdSemaphMutex != NULL)
             {
                 xSemaphoreTake(lcdSemaphMutex, portMAX_DELAY);
-                SSD1351_WriteString(20, 0, "start smart", Font_7x10, SSD1351_BLACK, SSD1351_BLACK);
+                SSD1351_WriteString(20, 0, "smart...", Font_7x10, SSD1351_RED, SSD1351_BLACK);
                 xSemaphoreGive(lcdSemaphMutex);
             }
             else

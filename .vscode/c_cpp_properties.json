@@ -3,7 +3,11 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/components/**",
+                "/home/xiang/esp/esp-idf/components/**",
+                "/home/xiang/esp/esp-idf/components/freertos/include",
+                "/home/xiang/esp/esp-idf/components/newlib/platform_include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

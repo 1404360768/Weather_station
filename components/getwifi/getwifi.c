@@ -1,12 +1,3 @@
-/* Esptouch example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
-
 #include <string.h>
 #include <stdlib.h>
 #include "freertos/FreeRTOS.h"
@@ -21,7 +12,7 @@
 #include "esp_netif.h"
 #include "esp_smartconfig.h"
 
-#include "smartconfig_main.h"
+#include "getwifi.h"
 
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t s_wifi_event_group;
@@ -68,7 +59,6 @@ static void event_handler(void *arg, esp_event_base_t event_base,
         wifi_config_t wifi_config;
         uint8_t ssid[33] = {0};
         uint8_t password[65] = {0};
-        uint8_t rvd_data[33] = {0};
 
         bzero(&wifi_config, sizeof(wifi_config_t));
         memcpy(wifi_config.sta.ssid, evt->ssid, sizeof(wifi_config.sta.ssid));
@@ -83,17 +73,6 @@ static void event_handler(void *arg, esp_event_base_t event_base,
         memcpy(password, evt->password, sizeof(evt->password));
         ESP_LOGI(TAG, "SSID:%s", ssid);
         ESP_LOGI(TAG, "PASSWORD:%s", password);
-        if (evt->type == SC_TYPE_ESPTOUCH_V2)
-        {
-            ESP_ERROR_CHECK(esp_smartconfig_get_rvd_data(rvd_data, sizeof(rvd_data)));
-            ESP_LOGI(TAG, "RVD_DATA:");
-            for (int i = 0; i < 33; i++)
-            {
-                printf("%02x ", rvd_data[i]);
-            }
-            printf("\n");
-        }
-
         ESP_ERROR_CHECK(esp_wifi_disconnect());
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
 
@@ -149,7 +128,7 @@ static void smartconfig_example_task(void *parm)
     }
 }
 
-void smartconfig_main(void)
+void smartconfig(void)
 {
     initialise_wifi();
 }

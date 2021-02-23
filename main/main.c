@@ -17,10 +17,11 @@
 #include "esp_netif.h"
 #include "esp_event.h"
 
-#include "smartconfig_main.h"
+#include "getwifi.h"
 #include "station.h"
 #include "lcd_task.h"
 #include "time_date.h"
+#include "factory_restore.h"
 
 void app_main(void)
 {
@@ -51,6 +52,7 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
+    factory_restore_init();
     lcd_task_init();
     wifi_station_init();
     time_date_init();

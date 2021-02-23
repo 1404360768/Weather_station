@@ -1,8 +1,7 @@
 #ifndef __LCD_NOKIA_5110_H
 #define __LCD_NOKIA_5110_H
 
-#include "../config/lcd_config.h"
-
+#include "lcd_config.h"
 #include "fonts.h" //需要的字符集
 
 #define NOKIA_5110_WIDE     84
